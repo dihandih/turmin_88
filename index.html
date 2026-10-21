@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full bg-slate-900 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manajer Turnamen Tenis Meja Tamser 88 - Multi Grup</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            ttNavy: '#0f172a',
+            ttEmerald: '#059669',
+            ttOrange: '#f97316',
+            ttRed: '#ef4444'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #059669; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between bg-slate-950 text-slate-100 antialiased">
+
+  <!-- HEADER / NAVBAR -->
+  <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-orange-500 flex items-center justify-center shadow-lg shadow-emerald-900/30">
+          <i data-lucide="trophy" class="w-6 h-6 text-white"></i>
+        </div>
+        <div>
+          <h1 class="text-lg sm:text-xl font-bold bg-gradient-to-r from-emerald-400 via-teal-200 to-orange-400 bg-clip-text text-transparent">
+            TURMIN TAMAN SERUA 88
+          </h1>
+          <p class="text-xs text-slate-400 hidden sm:block">Sistem Turnamen Multi-Grup Standar ITTF</p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <button id="googleSheetConfigBtn" onclick="openSheetsModal()" class="flex items-center gap-2 text-xs sm:text-sm bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-lg border border-slate-700 transition">
+          <i data-lucide="sheet" class="w-4 h-4 text-emerald-400"></i>
+          <span class="hidden md:inline">Integrasi</span> Google Sheets
+          <span id="sheetStatusBadge" class="w-2 h-2 rounded-full bg-slate-500 inline-block"></span>
+        </button>
+
+        <button onclick="resetTournamentPrompt()" class="flex items-center gap-1.5 text-xs sm:text-sm bg-red-950/60 hover:bg-red-900/80 text-red-300 px-3 py-2 rounded-lg border border-red-800/50 transition">
+          <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Reset Turnamen</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 flex-grow flex flex-col gap-6">
+
+    <!-- Tournament Settings Banner -->
+    <div class="bg-slate-900/80 rounded-2xl p-4 sm:p-5 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3 w-full sm:w-auto">
+        <div class="p-3 bg-emerald-950/80 text-emerald-400 border border-emerald-800/40 rounded-xl">
+          <i data-lucide="settings-2" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h2 class="text-sm font-semibold text-slate-200">Format Pertandingan (ITTF)</h2>
+          <p class="text-xs text-slate-400">Klasemen dibagi per Grup (Grup A, B, C) • Min 11 poin, Deuce selisih 2</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-4 w-full sm:w-auto justify-end">
+        <div class="flex items-center gap-2 bg-slate-950 p-1.5 rounded-xl border border-slate-800">
+          <label class="text-xs font-medium text-slate-400 px-2">Mode Set:</label>
+          <button id="formatBo3" onclick="setMatchFormat(3)" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-emerald-600 text-white">Best of 3</button>
+          <button id="formatBo5" onclick="setMatchFormat(5)" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white">Best of 5</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="flex border-b border-slate-800 space-x-2 sm:space-x-4 overflow-x-auto pb-1 scrollbar-none">
+      <button onclick="switchTab('players')" id="tabBtn-players" class="tab-btn flex items-center gap-2 px-4 py-2.5 rounded-t-lg font-medium text-sm transition border-b-2 border-emerald-500 text-emerald-400 bg-slate-900/50">
+        <i data-lucide="users" class="w-4 h-4"></i>
+        <span>Pemain & Grup</span>
+        <span id="playerCountBadge" class="ml-1 px-1.5 py-0.5 text-xs bg-emerald-950 text-emerald-300 rounded-full border border-emerald-800">0</span>
+      </button>
+
+      <button onclick="switchTab('matches')" id="tabBtn-matches" class="tab-btn flex items-center gap-2 px-4 py-2.5 rounded-t-lg font-medium text-sm transition border-b-2 border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/30">
+        <i data-lucide="calendar" class="w-4 h-4"></i>
+        <span>Jadwal & Skor</span>
+        <span id="matchProgressBadge" class="ml-1 px-1.5 py-0.5 text-xs bg-slate-800 text-slate-300 rounded-full">0/0</span>
+      </button>
+
+      <button onclick="switchTab('standings')" id="tabBtn-standings" class="tab-btn flex items-center gap-2 px-4 py-2.5 rounded-t-lg font-medium text-sm transition border-b-2 border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/30">
+        <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
+        <span>Klasemen Grup A, B, C</span>
+      </button>
+    </div>
+
+    <!-- TAB: PLAYERS -->
+    <div id="tabContent-players" class="tab-content space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Add Player Form -->
+        <div class="bg-slate-900 rounded-2xl p-5 border border-slate-800 shadow-md">
+          <h3 class="text-base font-semibold text-slate-100 mb-4 flex items-center gap-2">
+            <i data-lucide="user-plus" class="w-4 h-4 text-emerald-400"></i>
+            Tambah Pemain Baru
+          </h3>
+          <form id="addPlayerForm" onsubmit="handleAddPlayer(event)" class="space-y-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">Nama Pemain / Atlet *</label>
+              <input type="text" id="playerNameInput" required placeholder="Contoh: Budi Santoso" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">Pilih Grup Klasemen *</label>
+              <select id="playerGroupInput" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                <option value="A">Grup A</option>
+                <option value="B">Grup B</option>
+                <option value="C">Grup C</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">Klub / Asal (Opsional)</label>
+              <input type="text" id="playerClubInput" placeholder="Contoh: PTM Perkasa" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+            </div>
+            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm py-2.5 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/30">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              Tambahkan ke Turnamen
+            </button>
+          </form>
+
+          <div class="mt-6 pt-4 border-t border-slate-800/80">
+            <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+              <span>Generate Otomatis</span>
+              <button onclick="seedDemoPlayers()" class="text-emerald-400 hover:underline font-medium">Isi Sample Data (Grup A, B, C)</button>
+            </div>
+            <p class="text-[11px] text-slate-500">Mengisi 9 pemain sampel secara otomatis terbagi rata ke Grup A, B, dan C.</p>
+          </div>
+        </div>
+
+        <!-- Players List -->
+        <div class="lg:col-span-2 bg-slate-900 rounded-2xl p-5 border border-slate-800 shadow-md flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-base font-semibold text-slate-100 flex items-center gap-2">
+                <i data-lucide="users" class="w-4 h-4 text-orange-400"></i>
+                Daftar Peserta Per Grup
+              </h3>
+              <!-- Group Filter Pills for Player List -->
+              <div class="flex gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                <button onclick="filterPlayerGroupView('ALL')" id="pGroupTab-ALL" class="px-2.5 py-1 text-xs rounded-lg font-medium bg-emerald-600 text-white">Semua</button>
+                <button onclick="filterPlayerGroupView('A')" id="pGroupTab-A" class="px-2.5 py-1 text-xs rounded-lg font-medium text-slate-400 hover:text-white">Grup A</button>
+                <button onclick="filterPlayerGroupView('B')" id="pGroupTab-B" class="px-2.5 py-1 text-xs rounded-lg font-medium text-slate-400 hover:text-white">Grup B</button>
+                <button onclick="filterPlayerGroupView('C')" id="pGroupTab-C" class="px-2.5 py-1 text-xs rounded-lg font-medium text-slate-400 hover:text-white">Grup C</button>
+              </div>
+            </div>
+
+            <div id="playersListContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[380px] overflow-y-auto pr-1">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <div id="generateScheduleNotice" class="mt-4 p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between">
+            <span class="text-xs text-slate-400">Selesai mengatur pemain & grup? Lihat jadwal pertandingannya.</span>
+            <button onclick="switchTab('matches')" class="bg-orange-600 hover:bg-orange-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5">
+              <span>Lihat Jadwal Match</span>
+              <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB: MATCHES -->
+    <div id="tabContent-matches" class="tab-content space-y-6 hidden">
+      <!-- Filter & Controls -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-900 p-4 rounded-2xl border border-slate-800">
+        <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+          <div class="flex items-center gap-2">
+            <label class="text-xs text-slate-400 font-medium">Grup:</label>
+            <select id="matchGroupFilterSelect" onchange="renderMatches()" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-500">
+              <option value="ALL">Semua Grup (A, B, C)</option>
+              <option value="A">Grup A</option>
+              <option value="B">Grup B</option>
+              <option value="C">Grup C</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <label class="text-xs text-slate-400 font-medium">Filter Ronde:</label>
+            <select id="roundFilterSelect" onchange="renderMatches()" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-500">
+              <option value="ALL">Semua Ronde</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+          <button onclick="generateSchedule()" class="text-xs bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 px-3 py-2 rounded-xl transition flex items-center gap-1.5">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+            Generate / Reset Jadwal
+          </button>
+        </div>
+      </div>
+
+      <!-- Match Cards Grid -->
+      <div id="matchesContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Dynamically rendered match cards -->
+      </div>
+    </div>
+
+    <!-- TAB: STANDINGS -->
+    <div id="tabContent-standings" class="tab-content space-y-6 hidden">
+      <!-- Rules Info Banner -->
+      <div class="bg-slate-900/90 rounded-2xl p-4 border border-slate-800 text-xs text-slate-300 space-y-2">
+        <div class="font-semibold text-emerald-400 flex items-center gap-1.5 text-sm">
+          <i data-lucide="info" class="w-4 h-4"></i> Aturan Perhitungan Klasemen Grup ITTF Round Robin
+        </div>
+        <ul class="grid grid-cols-1 md:grid-cols-3 gap-2 text-slate-400">
+          <li class="flex items-start gap-1"><span class="text-orange-400 font-bold">•</span> <strong>Match Points:</strong> Menang = 2 poin, Kalah = 1 poin.</li>
+          <li class="flex items-start gap-1"><span class="text-orange-400 font-bold">•</span> <strong>Set Ratio:</strong> Total Set Menang ÷ Total Set Kalah.</li>
+          <li class="flex items-start gap-1"><span class="text-orange-400 font-bold">•</span> <strong>Tie-Breaker:</strong> Head-to-Head (H2H) antar pemain bersangkutan jika poin sama.</li>
+        </ul>
+      </div>
+
+      <!-- Group Standings Tables Container (Group A, B, C) -->
+      <div class="space-y-8" id="standingsGroupsContainer">
+        <!-- Dynamic tables for Group A, Group B, Group C -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL: Edit Match Score -->
+  <div id="scoreModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl transform transition-all">
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+        <h3 class="font-semibold text-slate-100 flex items-center gap-2">
+          <i data-lucide="edit-3" class="w-4 h-4 text-emerald-400"></i>
+          Input Skor Match (<span id="modalMatchGroupLabel" class="text-orange-400">Grup A</span>)
+        </h3>
+        <button onclick="closeScoreModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-5">
+        <!-- Match Heading -->
+        <div class="flex items-center justify-between bg-slate-950 p-3 rounded-xl border border-slate-800 text-center">
+          <div class="w-2/5">
+            <span id="modalPlayer1Name" class="block font-bold text-slate-200 text-sm truncate">Pemain 1</span>
+            <span id="modalPlayer1Club" class="block text-[11px] text-slate-500 truncate">-</span>
+          </div>
+          <div class="w-1/5 text-xs font-bold text-orange-400">VS</div>
+          <div class="w-2/5">
+            <span id="modalPlayer2Name" class="block font-bold text-slate-200 text-sm truncate">Pemain 2</span>
+            <span id="modalPlayer2Club" class="block text-[11px] text-slate-500 truncate">-</span>
+          </div>
+        </div>
+
+        <!-- Dynamic Sets Score Input -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between text-xs text-slate-400 font-semibold px-1">
+            <span>SET / GAME</span>
+            <span>SKOR SKORER ITTF</span>
+          </div>
+          <div id="modalSetInputsContainer" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+            <!-- Dynamic rows per set -->
+          </div>
+        </div>
+
+        <!-- Error/Validation Alert -->
+        <div id="scoreValidationAlert" class="hidden p-3 bg-red-950/60 border border-red-800/80 rounded-xl text-xs text-red-300 flex items-start gap-2">
+          <i data-lucide="alert-circle" class="w-4 h-4 text-red-400 shrink-0 mt-0.5"></i>
+          <span id="scoreValidationErrorText">Validasi skor gagal.</span>
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-slate-800 bg-slate-950/50 flex items-center justify-end gap-3">
+        <button onclick="closeScoreModal()" class="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 transition">Batal</button>
+        <button onclick="saveMatchScore()" class="px-5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center gap-1.5">
+          <i data-lucide="check" class="w-4 h-4"></i> Simpan Hasil
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Google Sheets Integration Config -->
+  <div id="sheetsModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl">
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+        <h3 class="font-semibold text-slate-100 flex items-center gap-2">
+          <i data-lucide="sheet" class="w-5 h-5 text-emerald-400"></i>
+          Pengaturan Google Sheets & Apps Script
+        </h3>
+        <button onclick="closeSheetsModal()" class="text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-4 max-h-[75vh] overflow-y-auto text-xs text-slate-300">
+        <p class="leading-relaxed">
+          Gunakan Google Sheets sebagai basis data cloud gratis! Cukup buat Google Script Web App dengan kode bawaan berikut:
+        </p>
+
+        <!-- Instructions -->
+        <div class="space-y-2 bg-slate-950 p-3 rounded-xl border border-slate-800">
+          <p class="font-semibold text-emerald-400">Langkah Penyambungan:</p>
+          <ol class="list-decimal list-inside space-y-1 text-slate-400 text-[11px]">
+            <li>Buka <a href="https://sheets.new" target="_blank" class="text-emerald-400 underline">Google Sheets Baru</a>.</li>
+            <li>Klik menu <strong>Extensions / Ekstensi</strong> &rarr; <strong>Apps Script</strong>.</li>
+            <li>Hapus kode bawaan, paste kode Apps Script dibawah ini, lalu Simpan.</li>
+            <li>Klik <strong>Deploy / Terapkan</strong> &rarr; <strong>New Deployment</strong>.</li>
+            <li>Pilih Jenis: <strong>Web App</strong>, Akses (Who has access): <strong>Anyone (Siapa Saja)</strong>.</li>
+            <li>Salin <strong>Web App URL</strong> dan tempel di kolom input di bawah.</li>
+          </ol>
+        </div>
+
+        <!-- Google Apps Script Code Copy Block -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <span class="font-semibold text-slate-200">Kode Google Apps Script (Code.gs):</span>
+            <button onclick="copyAppsScriptCode()" class="text-emerald-400 hover:underline flex items-center gap-1 text-[11px]">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i> Salin Kode
+            </button>
+          </div>
+          <pre id="scriptCodeBlock" class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-[10px] text-emerald-300 font-mono overflow-x-auto select-all max-h-36">
+function doGet(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var data = sheet.getRange(1, 1, 1, 1).getValue();
+  return ContentService.createTextOutput(data || "{}").setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var jsonString = e.postData.contents;
+  sheet.getRange(1, 1, 1, 1).setValue(jsonString);
+  return ContentService.createTextOutput(JSON.stringify({status: "SUCCESS"}))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+          </pre>
+        </div>
+
+        <!-- Input Field URL -->
+        <div class="space-y-1.5 pt-2">
+          <label class="block font-semibold text-slate-200">Web App Webhook URL:</label>
+          <input type="url" id="sheetWebUrlInput" placeholder="https://script.google.com/macros/s/AKfycb.../exec" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500">
+        </div>
+
+        <div id="sheetSyncStatusMsg" class="hidden p-2.5 rounded-xl border text-[11px]"></div>
+      </div>
+
+      <div class="p-4 border-t border-slate-800 bg-slate-950/50 flex items-center justify-between">
+        <button onclick="testAndSyncSheet('PULL')" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs rounded-xl flex items-center gap-1.5">
+          <i data-lucide="download" class="w-3.5 h-3.5"></i> Muat Data Sheets
+        </button>
+        <div class="flex items-center gap-2">
+          <button onclick="closeSheetsModal()" class="px-3 py-2 text-xs text-slate-400 hover:bg-slate-800 rounded-xl">Batal</button>
+          <button onclick="saveSheetConfig()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5">
+            <i data-lucide="save" class="w-3.5 h-3.5"></i> Simpan & Synchronize
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="toastNotification" class="fixed bottom-5 right-5 z-50 bg-slate-800 border border-slate-700 text-slate-100 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-20 opacity-0 pointer-events-none">
+    <i id="toastIcon" data-lucide="check-circle" class="w-5 h-5 text-emerald-400"></i>
+    <span id="toastMessage" class="text-xs font-medium">Pesan notifikasi.</span>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       APPLICATION STATE & CONSTANTS
+       ========================================================================== */
+    let tournamentState = {
+      matchFormat: 3, // 3 = Best of 3, 5 = Best of 5
+      players: [], // { id, name, club, group: 'A'|'B'|'C' }
+      matches: [], // { id, group, round, player1Id, player2Id, sets: [{p1, p2}], winnerId, isCompleted }
+      sheetUrl: ''
+    };
+
+    let activeEditingMatchId = null;
+    let selectedPlayerGroupView = 'ALL';
+
+    /* Local Storage Key */
+    const STORAGE_KEY = 'TT_ROUND_ROBIN_DATA_V2';
+
+    /* ==========================================================================
+       INITIALIZATION & EVENT LISTENERS
+       ========================================================================== */
+    window.addEventListener('DOMContentLoaded', () => {
+      loadStateFromStorage();
+      lucide.createIcons();
+      updatePlayerCountUI();
+      renderPlayers();
+      renderRoundFilterOptions();
+      renderMatches();
+      renderStandings();
+      updateSheetBadge();
+    });
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tournamentState));
+      syncToGoogleSheetsIfConfigured();
+    }
+
+    function loadStateFromStorage() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          tournamentState = JSON.parse(saved);
+          // Ensure group property exists on loaded players
+          tournamentState.players.forEach(p => {
+            if (!p.group) p.group = 'A';
+          });
+        } catch(e) {
+          console.error("Failed to parse saved state", e);
+        }
+      }
+    }
+
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toastNotification');
+      const msgEl = document.getElementById('toastMessage');
+      const iconEl = document.getElementById('toastIcon');
+
+      msgEl.innerText = message;
+      if (type === 'error') {
+        iconEl.setAttribute('data-lucide', 'alert-circle');
+        iconEl.className = 'w-5 h-5 text-red-400';
+      } else {
+        iconEl.setAttribute('data-lucide', 'check-circle');
+        iconEl.className = 'w-5 h-5 text-emerald-400';
+      }
+      lucide.createIcons();
+
+      toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+      }, 3000);
+    }
+
+    /* Navigation Tab Switching */
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('border-emerald-500', 'text-emerald-400', 'bg-slate-900/50');
+        btn.classList.add('border-transparent', 'text-slate-400');
+      });
+
+      const activeContent = document.getElementById(`tabContent-${tabId}`);
+      if (activeContent) activeContent.classList.remove('hidden');
+
+      const activeBtn = document.getElementById(`tabBtn-${tabId}`);
+      if (activeBtn) {
+        activeBtn.classList.remove('border-transparent', 'text-slate-400');
+        activeBtn.classList.add('border-emerald-500', 'text-emerald-400', 'bg-slate-900/50');
+      }
+
+      if (tabId === 'standings') {
+        renderStandings();
+      }
+    }
+
+    /* ==========================================================================
+       PLAYER & GROUP MANAGEMENT
+       ========================================================================== */
+    function handleAddPlayer(e) {
+      e.preventDefault();
+      const nameInput = document.getElementById('playerNameInput');
+      const groupInput = document.getElementById('playerGroupInput');
+      const clubInput = document.getElementById('playerClubInput');
+
+      const name = nameInput.value.trim();
+      const group = groupInput.value || 'A';
+      const club = clubInput.value.trim();
+
+      if (!name) return;
+
+      const newPlayer = {
+        id: 'p_' + Date.now() + '_' + Math.random().toString(36).substring(2, 5),
+        name: name,
+        group: group,
+        club: club || '-'
+      };
+
+      tournamentState.players.push(newPlayer);
+      nameInput.value = '';
+      clubInput.value = '';
+
+      saveState();
+      renderPlayers();
+      updatePlayerCountUI();
+
+      // Auto-regenerate schedule if players change
+      generateSchedule(false);
+
+      showToast(`Pemain "${name}" ditambahkan ke Grup ${group}.`);
+    }
+
+    function filterPlayerGroupView(group) {
+      selectedPlayerGroupView = group;
+      ['ALL', 'A', 'B', 'C'].forEach(g => {
+        const btn = document.getElementById(`pGroupTab-${g}`);
+        if (btn) {
+          if (g === group) {
+            btn.className = 'px-2.5 py-1 text-xs rounded-lg font-medium bg-emerald-600 text-white';
+          } else {
+            btn.className = 'px-2.5 py-1 text-xs rounded-lg font-medium text-slate-400 hover:text-white';
+          }
+        }
+      });
+      renderPlayers();
+    }
+
+    function removePlayer(playerId) {
+      const player = tournamentState.players.find(p => p.id === playerId);
+      if (!player) return;
+
+      if (confirm(`Hapus pemain "${player.name}" dari Grup ${player.group}? Jadwal akan direset.`)) {
+        tournamentState.players = tournamentState.players.filter(p => p.id !== playerId);
+        generateSchedule(false);
+        saveState();
+        renderPlayers();
+        updatePlayerCountUI();
+        showToast(`Pemain "${player.name}" dihapus.`);
+      }
+    }
+
+    function seedDemoPlayers() {
+      const samples = [
+        { name: 'Fikri Ardiansyah', club: 'PTM Garuda', group: 'A' },
+        { name: 'Rian Wijaya', club: 'PTM Sukses', group: 'A' },
+        { name: 'Deni Kurniawan', club: 'PTM Perkasa', group: 'A' },
+        { name: 'Ahmad Subagja', club: 'PTM Bintang', group: 'B' },
+        { name: 'Bambang Tri', club: 'PTM Mandiri', group: 'B' },
+        { name: 'Candra Wijaya', club: 'PTM Juara', group: 'B' },
+        { name: 'Doni Pratama', club: 'PTM Eagle', group: 'C' },
+        { name: 'Eko Prasetyo', club: 'PTM Champion', group: 'C' },
+        { name: 'Fajar Nugraha', club: 'PTM Smash', group: 'C' }
+      ];
+
+      tournamentState.players = samples.map((s, idx) => ({
+        id: 'p_demo_' + idx,
+        name: s.name,
+        club: s.club,
+        group: s.group
+      }));
+
+      generateSchedule(false);
+      saveState();
+      renderPlayers();
+      updatePlayerCountUI();
+      showToast('Sample data pemain Grup A, B, C berhasil dimuat!');
+    }
+
+    function renderPlayers() {
+      const container = document.getElementById('playersListContainer');
+      let playersToDisplay = tournamentState.players;
+
+      if (selectedPlayerGroupView !== 'ALL') {
+        playersToDisplay = playersToDisplay.filter(p => p.group === selectedPlayerGroupView);
+      }
+
+      if (playersToDisplay.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full py-8 text-center text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl">
+            Belum ada pemain di ${selectedPlayerGroupView === 'ALL' ? 'turnamen' : 'Grup ' + selectedPlayerGroupView}. Tambahkan pemain baru di sebelah kiri.
+          </div>
+        `;
+        return;
+      }
+
+      const groupColors = {
+        'A': 'bg-emerald-950 text-emerald-300 border-emerald-800/80',
+        'B': 'bg-orange-950 text-orange-300 border-orange-800/80',
+        'C': 'bg-blue-950 text-blue-300 border-blue-800/80'
+      };
+
+      container.innerHTML = playersToDisplay.map((player, index) => `
+        <div class="bg-slate-950 border border-slate-800 hover:border-slate-700 p-3 rounded-xl flex items-center justify-between transition">
+          <div class="flex items-center gap-3 overflow-hidden">
+            <span class="px-2 py-1 rounded-md text-[10px] font-bold border ${groupColors[player.group] || 'bg-slate-800 text-slate-300'}">
+              Grup ${player.group}
+            </span>
+            <div class="truncate">
+              <span class="block text-xs font-semibold text-slate-200 truncate">${escapeHtml(player.name)}</span>
+              <span class="block text-[10px] text-slate-500 truncate">${escapeHtml(player.club)}</span>
+            </div>
+          </div>
+          <button onclick="removePlayer('${player.id}')" class="text-slate-500 hover:text-red-400 p-1.5 transition">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    function updatePlayerCountUI() {
+      const badge = document.getElementById('playerCountBadge');
+      if (badge) badge.innerText = tournamentState.players.length;
+    }
+
+    /* ==========================================================================
+       MULTI-GROUP ROUND ROBIN SCHEDULER (Berger Tables Algorithm)
+       ========================================================================== */
+    function setMatchFormat(sets) {
+      if (tournamentState.matchFormat === sets) return;
+      tournamentState.matchFormat = sets;
+      
+      document.getElementById('formatBo3').className = sets === 3 
+        ? 'px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-emerald-600 text-white'
+        : 'px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white';
+        
+      document.getElementById('formatBo5').className = sets === 5 
+        ? 'px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-emerald-600 text-white'
+        : 'px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white';
+
+      saveState();
+      renderMatches();
+      showToast(`Format diubah ke Best of ${sets}`);
+    }
+
+    function generateSchedule(notify = true) {
+      const groups = ['A', 'B', 'C'];
+      let allMatches = [];
+
+      groups.forEach(grp => {
+        const groupPlayers = tournamentState.players.filter(p => p.group === grp);
+        if (groupPlayers.length >= 2) {
+          const groupMatches = generateBergerMatchesForGroup(groupPlayers, grp);
+          allMatches = allMatches.concat(groupMatches);
+        }
+      });
+
+      tournamentState.matches = allMatches;
+      saveState();
+      renderRoundFilterOptions();
+      renderMatches();
+      renderStandings();
+
+      if (notify) showToast('Jadwal Round Robin Multi-Grup telah diperbarui.');
+    }
+
+    function generateBergerMatchesForGroup(playersList, groupName) {
+      let pool = [...playersList];
+      const isOdd = pool.length % 2 !== 0;
+      if (isOdd) {
+        pool.push({ id: 'BYE', name: 'BYE', club: '-', group: groupName });
+      }
+
+      const numPlayers = pool.length;
+      const totalRounds = numPlayers - 1;
+      const matchesPerRound = numPlayers / 2;
+      const matches = [];
+
+      for (let r = 0; r < totalRounds; r++) {
+        for (let m = 0; m < matchesPerRound; m++) {
+          const p1 = pool[m];
+          const p2 = pool[numPlayers - 1 - m];
+
+          // Exclude matches involving BYE
+          if (p1.id !== 'BYE' && p2.id !== 'BYE') {
+            matches.push({
+              id: `m_grp${groupName}_r${r+1}_${m+1}`,
+              group: groupName,
+              round: r + 1,
+              player1Id: p1.id,
+              player2Id: p2.id,
+              sets: [],
+              winnerId: null,
+              isCompleted: false
+            });
+          }
+        }
+        // Rotate pool elements keeping first fixed
+        pool.splice(1, 0, pool.pop());
+      }
+
+      return matches;
+    }
+
+    /* ==========================================================================
+       MATCHES & ITTF SCORE INPUT LOGIC
+       ========================================================================== */
+    function renderRoundFilterOptions() {
+      const select = document.getElementById('roundFilterSelect');
+      if (!select) return;
+
+      const rounds = [...new Set(tournamentState.matches.map(m => m.round))].sort((a,b)=>a-b);
+      select.innerHTML = `<option value="ALL">Semua Ronde (${rounds.length})</option>` +
+        rounds.map(r => `<option value="${r}">Ronde ${r}</option>`).join('');
+    }
+
+    function renderMatches() {
+      const container = document.getElementById('matchesContainer');
+      const roundFilter = document.getElementById('roundFilterSelect')?.value || 'ALL';
+      const groupFilter = document.getElementById('matchGroupFilterSelect')?.value || 'ALL';
+
+      let filteredMatches = tournamentState.matches;
+
+      if (groupFilter !== 'ALL') {
+        filteredMatches = filteredMatches.filter(m => m.group === groupFilter);
+      }
+
+      if (roundFilter !== 'ALL') {
+        filteredMatches = filteredMatches.filter(m => m.round === parseInt(roundFilter));
+      }
+
+      // Update badge
+      const completedCount = tournamentState.matches.filter(m => m.isCompleted).length;
+      document.getElementById('matchProgressBadge').innerText = `${completedCount}/${tournamentState.matches.length}`;
+
+      if (filteredMatches.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full py-10 text-center text-slate-500 text-xs border border-dashed border-slate-800 rounded-2xl">
+            Belum ada jadwal pertandingan untuk filter terpilih. Pastikan setiap grup terisi minimal 2 pemain.
+          </div>
+        `;
+        return;
+      }
+
+      const groupPillColor = {
+        'A': 'bg-emerald-950 text-emerald-300 border-emerald-800/60',
+        'B': 'bg-orange-950 text-orange-300 border-orange-800/60',
+        'C': 'bg-blue-950 text-blue-300 border-blue-800/60'
+      };
+
+      container.innerHTML = filteredMatches.map(match => {
+        const p1 = tournamentState.players.find(p => p.id === match.player1Id) || { name: 'Terhapus', club: '-' };
+        const p2 = tournamentState.players.find(p => p.id === match.player2Id) || { name: 'Terhapus', club: '-' };
+
+        // Calculate current sets won
+        const { p1SetsWon, p2SetsWon } = calculateSetsWon(match.sets);
+
+        return `
+          <div class="bg-slate-900 rounded-2xl border ${match.isCompleted ? 'border-emerald-800/50 bg-slate-900/60' : 'border-slate-800'} p-4 shadow-md flex flex-col justify-between">
+            <div>
+              <!-- Round & Group Header -->
+              <div class="flex items-center justify-between pb-3 border-b border-slate-800/80 mb-3 text-xs">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded-md font-bold text-[11px] border ${groupPillColor[match.group] || 'bg-slate-800 text-slate-300'}">
+                    Grup ${match.group}
+                  </span>
+                  <span class="font-semibold text-slate-400">
+                    Ronde ${match.round}
+                  </span>
+                </div>
+                ${match.isCompleted 
+                  ? `<span class="text-emerald-400 font-semibold flex items-center gap-1 text-[11px]"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Selesai</span>` 
+                  : `<span class="text-slate-500 text-[11px]">Belum Main</span>`}
+              </div>
+
+              <!-- Players & Sets Breakdown -->
+              <div class="space-y-2">
+                <!-- Player 1 -->
+                <div class="flex items-center justify-between p-2 rounded-xl ${match.winnerId === p1.id ? 'bg-emerald-950/40 border border-emerald-800/30' : 'bg-slate-950'}">
+                  <div class="overflow-hidden pr-2">
+                    <span class="block text-xs font-bold text-slate-200 truncate ${match.winnerId === p1.id ? 'text-emerald-300' : ''}">
+                      ${escapeHtml(p1.name)}
+                    </span>
+                    <span class="block text-[10px] text-slate-500 truncate">${escapeHtml(p1.club)}</span>
+                  </div>
+                  <span class="text-base font-extrabold px-2.5 py-0.5 rounded-lg ${match.winnerId === p1.id ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-300'}">
+                    ${p1SetsWon}
+                  </span>
+                </div>
+
+                <!-- Player 2 -->
+                <div class="flex items-center justify-between p-2 rounded-xl ${match.winnerId === p2.id ? 'bg-emerald-950/40 border border-emerald-800/30' : 'bg-slate-950'}">
+                  <div class="overflow-hidden pr-2">
+                    <span class="block text-xs font-bold text-slate-200 truncate ${match.winnerId === p2.id ? 'text-emerald-300' : ''}">
+                      ${escapeHtml(p2.name)}
+                    </span>
+                    <span class="block text-[10px] text-slate-500 truncate">${escapeHtml(p2.club)}</span>
+                  </div>
+                  <span class="text-base font-extrabold px-2.5 py-0.5 rounded-lg ${match.winnerId === p2.id ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-300'}">
+                    ${p2SetsWon}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Set Scores Detail Pill -->
+              ${match.sets && match.sets.length > 0 ? `
+                <div class="mt-3 flex flex-wrap gap-1.5 text-[11px] text-slate-400 bg-slate-950 p-2 rounded-xl border border-slate-800/60 justify-center">
+                  ${match.sets.map((s, i) => `<span class="px-1.5 py-0.5 bg-slate-800 rounded text-slate-300">Set ${i+1}: <strong>${s.p1}-${s.p2}</strong></span>`).join('')}
+                </div>
+              ` : ''}
+            </div>
+
+            <!-- Action Button -->
+            <button onclick="openScoreModal('${match.id}')" class="mt-4 w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl transition border border-slate-700 flex items-center justify-center gap-1.5">
+              <i data-lucide="edit-3" class="w-3.5 h-3.5 text-emerald-400"></i>
+              ${match.isCompleted ? 'Edit Skor' : 'Input Skor'}
+            </button>
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function calculateSetsWon(sets) {
+      let p1SetsWon = 0;
+      let p2SetsWon = 0;
+
+      if (!sets) return { p1SetsWon, p2SetsWon };
+
+      sets.forEach(set => {
+        if (set.p1 !== undefined && set.p2 !== undefined) {
+          if (set.p1 > set.p2) p1SetsWon++;
+          else if (set.p2 > set.p1) p2SetsWon++;
+        }
+      });
+
+      return { p1SetsWon, p2SetsWon };
+    }
+
+    function openScoreModal(matchId) {
+      activeEditingMatchId = matchId;
+      const match = tournamentState.matches.find(m => m.id === matchId);
+      if (!match) return;
+
+      const p1 = tournamentState.players.find(p => p.id === match.player1Id) || { name: 'Pemain 1', club: '-' };
+      const p2 = tournamentState.players.find(p => p.id === match.player2Id) || { name: 'Pemain 2', club: '-' };
+
+      document.getElementById('modalMatchGroupLabel').innerText = `Grup ${match.group}`;
+      document.getElementById('modalPlayer1Name').innerText = p1.name;
+      document.getElementById('modalPlayer1Club').innerText = p1.club;
+      document.getElementById('modalPlayer2Name').innerText = p2.name;
+      document.getElementById('modalPlayer2Club').innerText = p2.club;
+
+      // Clear alert
+      document.getElementById('scoreValidationAlert').classList.add('hidden');
+
+      // Populate set input fields
+      const maxSets = tournamentState.matchFormat;
+      const container = document.getElementById('modalSetInputsContainer');
+      container.innerHTML = '';
+
+      for (let i = 0; i < maxSets; i++) {
+        const existingSet = match.sets[i] || { p1: '', p2: '' };
+        container.innerHTML += `
+          <div class="flex items-center gap-3 bg-slate-950 p-2 rounded-xl border border-slate-800">
+            <span class="text-xs font-semibold text-slate-400 w-12">Set ${i + 1}</span>
+            <input type="number" min="0" id="set_${i}_p1" value="${existingSet.p1 !== undefined ? existingSet.p1 : ''}" placeholder="0" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-center text-xs text-slate-100 focus:outline-none focus:border-emerald-500 font-bold">
+            <span class="text-slate-600 font-bold">-</span>
+            <input type="number" min="0" id="set_${i}_p2" value="${existingSet.p2 !== undefined ? existingSet.p2 : ''}" placeholder="0" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-center text-xs text-slate-100 focus:outline-none focus:border-emerald-500 font-bold">
+          </div>
+        `;
+      }
+
+      document.getElementById('scoreModal').classList.remove('hidden');
+    }
+
+    function closeScoreModal() {
+      document.getElementById('scoreModal').classList.add('hidden');
+      activeEditingMatchId = null;
+    }
+
+    /* ITTF Set Rule Validation */
+    function validateSetScore(p1Score, p2Score) {
+      if (p1Score === 0 && p2Score === 0) return { valid: false, message: 'Skor set tidak boleh 0-0' };
+      
+      const max = Math.max(p1Score, p2Score);
+      const min = Math.min(p1Score, p2Score);
+      const diff = max - min;
+
+      // ITTF Rule: Minimum 11 points and win by at least 2 points
+      if (max < 11) {
+        return { valid: false, message: `Pemenang set harus mencapai minimal 11 poin.` };
+      }
+      if (max === 11 && diff < 2) {
+        return { valid: false, message: `Minimal selisih 2 poin (misal 11-9).` };
+      }
+      if (max > 11 && diff !== 2) {
+        return { valid: false, message: `Pada deuce (>10), selisih angka pemenang harus persis 2 poin (misal 12-10, 14-12).` };
+      }
+
+      return { valid: true };
+    }
+
+    function saveMatchScore() {
+      if (!activeEditingMatchId) return;
+
+      const match = tournamentState.matches.find(m => m.id === activeEditingMatchId);
+      if (!match) return;
+
+      const maxSets = tournamentState.matchFormat;
+      const setsToWin = Math.ceil(maxSets / 2);
+      
+      const sets = [];
+      let p1SetsWon = 0;
+      let p2SetsWon = 0;
+
+      for (let i = 0; i < maxSets; i++) {
+        const p1Val = document.getElementById(`set_${i}_p1`)?.value;
+        const p2Val = document.getElementById(`set_${i}_p2`)?.value;
+
+        if (p1Val !== '' && p2Val !== '' && p1Val !== null && p2Val !== null) {
+          const p1Score = parseInt(p1Val, 10);
+          const p2Score = parseInt(p2Val, 10);
+
+          if (!isNaN(p1Score) && !isNaN(p2Score)) {
+            // Validate individual set ITTF rules
+            const val = validateSetScore(p1Score, p2Score);
+            if (!val.valid) {
+              showScoreAlert(`Set ${i + 1}: ${val.message}`);
+              return;
+            }
+
+            sets.push({ p1: p1Score, p2: p2Score });
+            if (p1Score > p2Score) p1SetsWon++;
+            else p2SetsWon++;
+
+            if (p1SetsWon === setsToWin || p2SetsWon === setsToWin) {
+              break;
+            }
+          }
+        }
+      }
+
+      if (sets.length === 0) {
+        showScoreAlert('Harap masukkan set sekurang-kurangnya 1 set yang valid.');
+        return;
+      }
+
+      if (p1SetsWon < setsToWin && p2SetsWon < setsToWin) {
+        showScoreAlert(`Pertandingan Best of ${maxSets} membutuhkan ${setsToWin} kemenangan set.`);
+        return;
+      }
+
+      // Valid match completed
+      match.sets = sets;
+      match.isCompleted = true;
+      match.winnerId = p1SetsWon > p2SetsWon ? match.player1Id : match.player2Id;
+
+      saveState();
+      closeScoreModal();
+      renderMatches();
+      renderStandings();
+      showToast('Skor pertandingan berhasil disimpan.');
+    }
+
+    function showScoreAlert(msg) {
+      const alertBox = document.getElementById('scoreValidationAlert');
+      const textEl = document.getElementById('scoreValidationErrorText');
+      textEl.innerText = msg;
+      alertBox.classList.remove('hidden');
+    }
+
+    /* ==========================================================================
+       DYNAMIC MULTI-GROUP STANDINGS & ITTF TIE-BREAKER ENGINE
+       ========================================================================== */
+    function renderStandings() {
+      const container = document.getElementById('standingsGroupsContainer');
+      if (!container) return;
+
+      const groups = ['A', 'B', 'C'];
+      container.innerHTML = '';
+
+      groups.forEach(grp => {
+        const groupPlayers = tournamentState.players.filter(p => p.group === grp);
+        const groupMatches = tournamentState.matches.filter(m => m.group === grp);
+
+        container.innerHTML += buildGroupStandingsHTML(grp, groupPlayers, groupMatches);
+      });
+
+      lucide.createIcons();
+    }
+
+    function buildGroupStandingsHTML(groupName, groupPlayers, groupMatches) {
+      if (groupPlayers.length === 0) {
+        return `
+          <div class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-xl p-5 text-center text-slate-500 text-xs">
+            <h3 class="font-bold text-slate-300 text-sm mb-2 text-left">Klasemen Grup ${groupName}</h3>
+            Belum ada pemain di Grup ${groupName}.
+          </div>
+        `;
+      }
+
+      // Calculate base statistics for each player in group
+      let stats = groupPlayers.map(p => ({
+        id: p.id,
+        name: p.name,
+        club: p.club,
+        played: 0,
+        won: 0,
+        lost: 0,
+        setsWon: 0,
+        setsLost: 0,
+        pointsWon: 0,
+        pointsLost: 0,
+        matchPoints: 0 // ITTF: Win = 2, Loss = 1
+      }));
+
+      // Aggregate match data for group
+      groupMatches.forEach(m => {
+        if (!m.isCompleted) return;
+
+        const p1Stat = stats.find(s => s.id === m.player1Id);
+        const p2Stat = stats.find(s => s.id === m.player2Id);
+
+        if (!p1Stat || !p2Stat) return;
+
+        p1Stat.played++;
+        p2Stat.played++;
+
+        let p1SetCount = 0;
+        let p2SetCount = 0;
+
+        m.sets.forEach(s => {
+          p1Stat.pointsWon += s.p1;
+          p1Stat.pointsLost += s.p2;
+          p2Stat.pointsWon += s.p2;
+          p2Stat.pointsLost += s.p1;
+
+          if (s.p1 > s.p2) p1SetCount++;
+          else p2SetCount++;
+        });
+
+        p1Stat.setsWon += p1SetCount;
+        p1Stat.setsLost += p2SetCount;
+        p2Stat.setsWon += p2SetCount;
+        p2Stat.setsLost += p1SetCount;
+
+        if (m.winnerId === m.player1Id) {
+          p1Stat.won++;
+          p1Stat.matchPoints += 2;
+          p2Stat.lost++;
+          p2Stat.matchPoints += 1;
+        } else if (m.winnerId === m.player2Id) {
+          p2Stat.won++;
+          p2Stat.matchPoints += 2;
+          p1Stat.lost++;
+          p1Stat.matchPoints += 1;
+        }
+      });
+
+      // ITTF Tie-Breaking Sort
+      stats.sort((a, b) => {
+        if (b.matchPoints !== a.matchPoints) return b.matchPoints - a.matchPoints;
+
+        const h2hWinner = checkHeadToHead(a.id, b.id, groupMatches);
+        if (h2hWinner === a.id) return -1;
+        if (h2hWinner === b.id) return 1;
+
+        const aSetRatio = a.setsLost === 0 ? a.setsWon : (a.setsWon / a.setsLost);
+        const bSetRatio = b.setsLost === 0 ? b.setsWon : (b.setsWon / b.setsLost);
+        if (bSetRatio !== aSetRatio) return bSetRatio - aSetRatio;
+
+        const aPointRatio = a.pointsLost === 0 ? a.pointsWon : (a.pointsWon / a.pointsLost);
+        const bPointRatio = b.pointsLost === 0 ? b.pointsWon : (b.pointsWon / b.pointsLost);
+        return bPointRatio - aPointRatio;
+      });
+
+      const groupBadgeColor = {
+        'A': 'bg-emerald-950 text-emerald-300 border-emerald-800',
+        'B': 'bg-orange-950 text-orange-300 border-orange-800',
+        'C': 'bg-blue-950 text-blue-300 border-blue-800'
+      };
+
+      const rowsHTML = stats.map((stat, rank) => {
+        const setRatio = stat.setsLost === 0 ? (stat.setsWon > 0 ? 'MAX' : '0.00') : (stat.setsWon / stat.setsLost).toFixed(2);
+        const pointRatio = stat.pointsLost === 0 ? (stat.pointsWon > 0 ? 'MAX' : '0.00') : (stat.pointsWon / stat.pointsLost).toFixed(2);
+
+        let medalBadge = `<span class="text-slate-400 font-bold">${rank + 1}</span>`;
+        if (rank === 0) medalBadge = `<span class="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 flex items-center justify-center font-bold text-xs mx-auto">1</span>`;
+        if (rank === 1) medalBadge = `<span class="w-6 h-6 rounded-full bg-slate-300/20 text-slate-300 border border-slate-300/40 flex items-center justify-center font-bold text-xs mx-auto">2</span>`;
+        if (rank === 2) medalBadge = `<span class="w-6 h-6 rounded-full bg-amber-700/20 text-amber-600 border border-amber-700/40 flex items-center justify-center font-bold text-xs mx-auto">3</span>`;
+
+        return `
+          <tr class="hover:bg-slate-900/50 transition">
+            <td class="py-3 px-4 text-center">${medalBadge}</td>
+            <td class="py-3 px-4">
+              <span class="block font-bold text-slate-200">${escapeHtml(stat.name)}</span>
+              <span class="block text-[10px] text-slate-500">${escapeHtml(stat.club)}</span>
+            </td>
+            <td class="py-3 px-4 text-center text-slate-300">${stat.played}</td>
+            <td class="py-3 px-4 text-center text-emerald-400 font-bold">${stat.won}</td>
+            <td class="py-3 px-4 text-center text-red-400">${stat.lost}</td>
+            <td class="py-3 px-4 text-center text-slate-300">${stat.setsWon}-${stat.setsLost}</td>
+            <td class="py-3 px-4 text-center font-mono text-xs text-slate-400">${setRatio}</td>
+            <td class="py-3 px-4 text-center text-slate-300">${stat.pointsWon}-${stat.pointsLost}</td>
+            <td class="py-3 px-4 text-center font-mono text-xs text-slate-400">${pointRatio}</td>
+            <td class="py-3 px-4 text-center">
+              <span class="inline-block px-2.5 py-1 rounded-lg bg-orange-950/80 text-orange-400 border border-orange-800/60 font-extrabold text-sm">
+                ${stat.matchPoints}
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      return `
+        <div class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-xl">
+          <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+            <h3 class="font-bold text-slate-100 flex items-center gap-2 text-sm sm:text-base">
+              <span class="px-2.5 py-1 rounded-lg text-xs font-bold border ${groupBadgeColor[groupName]}">
+                Grup ${groupName}
+              </span>
+              Klasemen Grup ${groupName}
+            </h3>
+            <span class="text-xs bg-slate-800 text-slate-400 px-2.5 py-1 rounded-lg">${groupPlayers.length} Pemain</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-slate-950 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-800">
+                <tr>
+                  <th class="py-3.5 px-4 font-semibold text-center w-12">Pos</th>
+                  <th class="py-3.5 px-4 font-semibold">Nama Pemain</th>
+                  <th class="py-3.5 px-4 font-semibold text-center">Main</th>
+                  <th class="py-3.5 px-4 font-semibold text-center text-emerald-400">M</th>
+                  <th class="py-3.5 px-4 font-semibold text-center text-red-400">K</th>
+                  <th class="py-3.5 px-4 font-semibold text-center">Set (M-K)</th>
+                  <th class="py-3.5 px-4 font-semibold text-center">Set Ratio</th>
+                  <th class="py-3.5 px-4 font-semibold text-center">Poin ITTF (M-K)</th>
+                  <th class="py-3.5 px-4 font-semibold text-center">Point Ratio</th>
+                  <th class="py-3.5 px-4 font-semibold text-center text-orange-400 font-bold">Poin Match</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-800/60 font-medium">
+                ${rowsHTML}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function checkHeadToHead(playerAId, playerBId, groupMatches) {
+      const match = groupMatches.find(
+        m => m.isCompleted &&
+        ((m.player1Id === playerAId && m.player2Id === playerBId) ||
+         (m.player1Id === playerBId && m.player2Id === playerAId))
+      );
+
+      return match ? match.winnerId : null;
+    }
+
+    /* ==========================================================================
+       GOOGLE SHEETS & APPS SCRIPT INTEGRATION
+       ========================================================================== */
+    function openSheetsModal() {
+      document.getElementById('sheetWebUrlInput').value = tournamentState.sheetUrl || '';
+      document.getElementById('sheetsModal').classList.remove('hidden');
+    }
+
+    function closeSheetsModal() {
+      document.getElementById('sheetsModal').classList.add('hidden');
+    }
+
+    function copyAppsScriptCode() {
+      const code = document.getElementById('scriptCodeBlock').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        showToast('Kode Apps Script disalin ke clipboard.');
+      }).catch(() => {
+        const textarea = document.createElement('textarea');
+        textarea.value = code;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showToast('Kode disalin!');
+      });
+    }
+
+    function saveSheetConfig() {
+      const url = document.getElementById('sheetWebUrlInput').value.trim();
+      tournamentState.sheetUrl = url;
+      saveState();
+      updateSheetBadge();
+      closeSheetsModal();
+      showToast('Konfigurasi Google Sheets disimpan.');
+    }
+
+    function updateSheetBadge() {
+      const badge = document.getElementById('sheetStatusBadge');
+      if (!badge) return;
+
+      if (tournamentState.sheetUrl) {
+        badge.className = 'w-2 h-2 rounded-full bg-emerald-400 inline-block shadow-sm shadow-emerald-400';
+      } else {
+        badge.className = 'w-2 h-2 rounded-full bg-slate-500 inline-block';
+      }
+    }
+
+    async function syncToGoogleSheetsIfConfigured() {
+      if (!tournamentState.sheetUrl) return;
+
+      try {
+        await fetch(tournamentState.sheetUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(tournamentState)
+        });
+      } catch (err) {
+        console.warn('Google Sheets auto-sync notice:', err);
+      }
+    }
+
+    async function testAndSyncSheet(direction = 'PULL') {
+      const url = document.getElementById('sheetWebUrlInput').value.trim();
+      const statusMsg = document.getElementById('sheetSyncStatusMsg');
+
+      if (!url) {
+        statusMsg.innerText = 'Harap masukkan Web App URL Google Script!';
+        statusMsg.className = 'p-2.5 rounded-xl border border-red-800 bg-red-950/60 text-red-300 text-[11px] block';
+        return;
+      }
+
+      statusMsg.innerText = 'Menghubungkan ke Google Sheets...';
+      statusMsg.className = 'p-2.5 rounded-xl border border-slate-800 bg-slate-950 text-slate-300 text-[11px] block';
+
+      try {
+        if (direction === 'PULL') {
+          const res = await fetch(url);
+          const data = await res.json();
+          if (data && data.players) {
+            tournamentState = data;
+            saveState();
+            renderPlayers();
+            renderRoundFilterOptions();
+            renderMatches();
+            renderStandings();
+            statusMsg.innerText = 'Data berhasil ditarik dari Google Sheets!';
+            statusMsg.className = 'p-2.5 rounded-xl border border-emerald-800 bg-emerald-950/60 text-emerald-300 text-[11px] block';
+          } else {
+            statusMsg.innerText = 'Koneksi berhasil, namun Sheet masih kosong.';
+            statusMsg.className = 'p-2.5 rounded-xl border border-amber-800 bg-amber-950/60 text-amber-300 text-[11px] block';
+          }
+        }
+      } catch (e) {
+        statusMsg.innerText = 'Gagal terhubung. Pastikan Web App diset "Anyone" dan URL benar.';
+        statusMsg.className = 'p-2.5 rounded-xl border border-red-800 bg-red-950/60 text-red-300 text-[11px] block';
+      }
+    }
+
+    /* Reset Utility */
+    function resetTournamentPrompt() {
+      if (confirm('Apakah Anda yakin ingin mereset seluruh data turnamen, pemain, dan skor?')) {
+        tournamentState = {
+          matchFormat: 3,
+          players: [],
+          matches: [],
+          sheetUrl: tournamentState.sheetUrl || ''
+        };
+        saveState();
+        renderPlayers();
+        updatePlayerCountUI();
+        renderRoundFilterOptions();
+        renderMatches();
+        renderStandings();
+        showToast('Turnamen berhasil direset.');
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>
