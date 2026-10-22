@@ -76,7 +76,7 @@
         </div>
         <div>
           <h2 class="text-sm font-semibold text-slate-200">Aturan Poin Pertandingan Terbaru</h2>
-          <p class="text-xs text-slate-400">Main hingga 1 pemain menang 3 set. Win 3-0 (3 Poin), Win 3-1 (2 Poin, Kalah 0 Poin), Win 3-2 (2 Poin, Kalah 1 Poin).</p>
+          <p class="text-xs text-slate-400">Main hingga 1 pemain menang 3 set. Win 3-0 (Menang 3 Poin, Kalah 0 Poin), Win 3-1 (Menang 3 Poin, Kalah 0 Poin), Win 3-2 (Menang 2 Poin, Kalah 1 Poin).</p>
         </div>
       </div>
     </div>
@@ -1049,7 +1049,7 @@ function doPost(e) {
 
         /* ATURAN SKOR & POIN KHUSUS TERBARU:
            - Win 3-0 -> Menang: 3 poin, Kalah: 0 poin
-           - Win 3-1 -> Menang: 2 poin, Kalah: 0 poin
+           - Win 3-1 -> Menang: 3 poin, Kalah: 0 poin
            - Win 3-2 -> Menang: 2 poin, Kalah: 1 poin
         */
         const isP1Winner = p1SetCount === 3;
@@ -1064,7 +1064,7 @@ function doPost(e) {
           loserPointsGained = 0;
         } else if (loserSetsWon === 1) {
           // Win 3-1
-          winnerPointsGained = 2;
+          winnerPointsGained = 3;
           loserPointsGained = 0;
         } else if (loserSetsWon === 2) {
           // Win 3-2
