@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Turnamen Tenis Meja Tamser 88 - Custom Points</title>
+  <title>Turnamen Tenis Meja Tamser 88</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
@@ -44,9 +44,9 @@
         </div>
         <div>
           <h1 class="text-lg sm:text-xl font-bold bg-gradient-to-r from-emerald-400 via-teal-200 to-orange-400 bg-clip-text text-transparent">
-            TURMIN TAMSER 88
+            TURMIN TAMAN SERUA 88
           </h1>
-          <p class="text-xs text-slate-400 hidden sm:block">Aturan Poin Khusus (First to 3 Wins)</p>
+          <p class="text-xs text-slate-400 hidden sm:block">(First to 3 Wins)</p>
         </div>
       </div>
 
@@ -377,17 +377,25 @@ function doPost(e) {
 
   <script>
     /* ==========================================================================
+       HARDCODED CONFIGURATION
+       Tempel Web App URL Google Apps Script Anda di bawah ini
+       ========================================================================== */
+    const HARDCODED_SHEET_URL = "https://script.google.com/macros/s/AKfycbybLxIlDqGGtNsnnyrSxae3AbzD4kLOD-kqjhAkWsrXD7uM1NTNMHrXFqawO_nPL_bd/exec";
+
+    /* ==========================================================================
        APPLICATION STATE & CONSTANTS
        ========================================================================== */
     let tournamentState = {
       matchFormat: 5, // Up to 5 sets max to reach 3 wins
       players: [], // { id, name, club, group: 'A'|'B'|'C' }
       matches: [], // { id, group, round, player1Id, player2Id, sets: [{p1, p2}], winnerId, isCompleted }
-      sheetUrl: ''
+      sheetUrl: HARDCODED_SHEET_URL
     };
 
     let activeEditingMatchId = null;
     let selectedPlayerGroupView = 'ALL';
+    let autoSyncInterval = null;
+    let isSyncing = false;
 
     /* Local Storage Key */
     const STORAGE_KEY = 'TT_ROUND_ROBIN_DATA_V2';
@@ -397,6 +405,12 @@ function doPost(e) {
        ========================================================================== */
     window.addEventListener('DOMContentLoaded', () => {
       loadStateFromStorage();
+      
+      // Jika URL di hardcoded belum tersimpan di state local, gunakan HARDCODED_SHEET_URL
+      if (!tournamentState.sheetUrl && HARDCODED_SHEET_URL.includes("https://script.google.com")) {
+        tournamentState.sheetUrl = HARDCODED_SHEET_URL;
+      }
+
       lucide.createIcons();
       updatePlayerCountUI();
       renderPlayers();
@@ -404,11 +418,52 @@ function doPost(e) {
       renderMatches();
       renderStandings();
       updateSheetBadge();
+      setupRealtimeAutoSync();
+
+      // Langsung tarik data terbaru dari Sheet jika URL valid
+      if (tournamentState.sheetUrl && !tournamentState.sheetUrl.includes("PASTE_URL_WEB_APP_ANDA_DISINI")) {
+        fetchFromGoogleSheetSilent();
+      }
     });
 
     function saveState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(tournamentState));
       syncToGoogleSheetsIfConfigured();
+    }
+
+    function setupRealtimeAutoSync() {
+      if (autoSyncInterval) clearInterval(autoSyncInterval);
+      
+      // Auto-poll Google Sheets every 5 seconds for live multi-device updates
+      autoSyncInterval = setInterval(() => {
+        if (tournamentState.sheetUrl && !tournamentState.sheetUrl.includes("PASTE_URL_WEB_APP_ANDA_DISINI") && !isSyncing && !activeEditingMatchId) {
+          fetchFromGoogleSheetSilent();
+        }
+      }, 5000);
+    }
+
+    async function fetchFromGoogleSheetSilent() {
+      if (!tournamentState.sheetUrl || tournamentState.sheetUrl.includes("PASTE_URL_WEB_APP_ANDA_DISINI") || isSyncing) return;
+      try {
+        isSyncing = true;
+        const res = await fetch(tournamentState.sheetUrl);
+        const data = await res.json();
+        if (data && data.players && JSON.stringify(data) !== JSON.stringify(tournamentState)) {
+          tournamentState = data;
+          if (!tournamentState.sheetUrl) tournamentState.sheetUrl = HARDCODED_SHEET_URL;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(tournamentState));
+          renderPlayers();
+          renderRoundFilterOptions();
+          renderMatches();
+          renderStandings();
+          updatePlayerCountUI();
+          updateSheetBadge();
+        }
+      } catch (e) {
+        console.warn('Auto-sync poll error:', e);
+      } finally {
+        isSyncing = false;
+      }
     }
 
     function loadStateFromStorage() {
@@ -1172,25 +1227,29 @@ function doPost(e) {
       const badge = document.getElementById('sheetStatusBadge');
       if (!badge) return;
 
-      if (tournamentState.sheetUrl) {
-        badge.className = 'w-2 h-2 rounded-full bg-emerald-400 inline-block shadow-sm shadow-emerald-400';
+      if (tournamentState.sheetUrl && !tournamentState.sheetUrl.includes("PASTE_URL_WEB_APP_ANDA_DISINI")) {
+        badge.className = 'w-2 h-2 rounded-full bg-emerald-400 inline-block shadow-sm shadow-emerald-400 animate-pulse';
       } else {
         badge.className = 'w-2 h-2 rounded-full bg-slate-500 inline-block';
       }
     }
 
     async function syncToGoogleSheetsIfConfigured() {
-      if (!tournamentState.sheetUrl) return;
+      if (!tournamentState.sheetUrl || tournamentState.sheetUrl.includes("PASTE_URL_WEB_APP_ANDA_DISINI")) return;
 
       try {
+        isSyncing = true;
         await fetch(tournamentState.sheetUrl, {
           method: 'POST',
           mode: 'no-cors',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(tournamentState)
         });
+        updateSheetBadge();
       } catch (err) {
         console.warn('Google Sheets auto-sync notice:', err);
+      } finally {
+        setTimeout(() => { isSyncing = false; }, 1000);
       }
     }
 
@@ -1198,7 +1257,7 @@ function doPost(e) {
       const url = document.getElementById('sheetWebUrlInput').value.trim();
       const statusMsg = document.getElementById('sheetSyncStatusMsg');
 
-      if (!url) {
+      if (!url || url.includes("PASTE_URL_WEB_APP_ANDA_DISINI")) {
         statusMsg.innerText = 'Harap masukkan Web App URL Google Script!';
         statusMsg.className = 'p-2.5 rounded-xl border border-red-800 bg-red-950/60 text-red-300 text-[11px] block';
         return;
@@ -1213,6 +1272,7 @@ function doPost(e) {
           const data = await res.json();
           if (data && data.players) {
             tournamentState = data;
+            tournamentState.sheetUrl = url;
             saveState();
             renderPlayers();
             renderRoundFilterOptions();
@@ -1238,7 +1298,7 @@ function doPost(e) {
           matchFormat: 5,
           players: [],
           matches: [],
-          sheetUrl: tournamentState.sheetUrl || ''
+          sheetUrl: HARDCODED_SHEET_URL
         };
         saveState();
         renderPlayers();
