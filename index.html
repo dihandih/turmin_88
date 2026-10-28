@@ -202,8 +202,8 @@
 
         <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
           <button onclick="generateSchedule()" class="text-xs bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 px-3 py-2 rounded-xl transition flex items-center gap-1.5">
-            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-            Generate / Reset Jadwal
+            <i data-lucide="shuffle" class="w-3.5 h-3.5"></i>
+            Acak / Reset Jadwal
           </button>
         </div>
       </div>
@@ -399,6 +399,16 @@ function doPost(e) {
 
     /* Local Storage Key */
     const STORAGE_KEY = 'TT_ROUND_ROBIN_DATA_V2';
+
+    /* Helper: Utility Shuffle Array (Fisher-Yates) */
+    function shuffleArray(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
 
     /* ==========================================================================
        INITIALIZATION & EVENT LISTENERS
@@ -663,7 +673,7 @@ function doPost(e) {
     }
 
     /* ==========================================================================
-       MULTI-GROUP ROUND ROBIN SCHEDULER
+       MULTI-GROUP RANDOMIZED ROUND ROBIN SCHEDULER
        ========================================================================== */
     function generateSchedule(notify = true) {
       const groups = ['A', 'B', 'C'];
@@ -683,11 +693,12 @@ function doPost(e) {
       renderMatches();
       renderStandings();
 
-      if (notify) showToast('Jadwal Round Robin Multi-Grup telah diperbarui.');
+      if (notify) showToast('Jadwal pertandingan berhasil diacak secara otomatis.');
     }
 
     function generateBergerMatchesForGroup(playersList, groupName) {
-      let pool = [...playersList];
+      // Mengacak urutan pemain terlebih dahulu agar posisi bagan teracak
+      let pool = shuffleArray(playersList);
       const isOdd = pool.length % 2 !== 0;
       if (isOdd) {
         pool.push({ id: 'BYE', name: 'BYE', club: '-', group: groupName });
@@ -696,30 +707,51 @@ function doPost(e) {
       const numPlayers = pool.length;
       const totalRounds = numPlayers - 1;
       const matchesPerRound = numPlayers / 2;
-      const matches = [];
+      const roundsList = [];
 
       for (let r = 0; r < totalRounds; r++) {
+        const roundMatches = [];
         for (let m = 0; m < matchesPerRound; m++) {
           const p1 = pool[m];
           const p2 = pool[numPlayers - 1 - m];
 
           if (p1.id !== 'BYE' && p2.id !== 'BYE') {
-            matches.push({
-              id: `m_grp${groupName}_r${r+1}_${m+1}`,
-              group: groupName,
-              round: r + 1,
-              player1Id: p1.id,
-              player2Id: p2.id,
+            // Acak penempatan sisi (Player 1 vs Player 2)
+            const isSwapped = Math.random() < 0.5;
+            roundMatches.push({
+              player1Id: isSwapped ? p2.id : p1.id,
+              player2Id: isSwapped ? p1.id : p2.id,
               sets: [],
               winnerId: null,
               isCompleted: false
             });
           }
         }
+        // Acak urutan match dalam satu ronde yang sama
+        roundsList.push(shuffleArray(roundMatches));
         pool.splice(1, 0, pool.pop());
       }
 
-      return matches;
+      // Acak urutan ronde agar jadwal ronde 1..N terdistribusi acak
+      const shuffledRounds = shuffleArray(roundsList);
+
+      const finalMatches = [];
+      shuffledRounds.forEach((roundMatches, roundIndex) => {
+        roundMatches.forEach((m, matchIndex) => {
+          finalMatches.push({
+            id: `m_grp${groupName}_r${roundIndex + 1}_${matchIndex + 1}_${Math.random().toString(36).substring(2, 6)}`,
+            group: groupName,
+            round: roundIndex + 1,
+            player1Id: m.player1Id,
+            player2Id: m.player2Id,
+            sets: [],
+            winnerId: null,
+            isCompleted: false
+          });
+        });
+      });
+
+      return finalMatches;
     }
 
     /* ==========================================================================
