@@ -58,8 +58,8 @@
           <span id="sheetStatusBadge" class="w-2 h-2 rounded-full bg-slate-500 inline-block"></span>
         </button>
 
-        <button onclick="resetTournamentPrompt()" class="flex items-center gap-1.5 text-xs sm:text-sm bg-red-950/60 hover:bg-red-900/80 text-red-300 px-3 py-2 rounded-lg border border-red-800/50 transition">
-          <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+        <button disabled class="flex items-center gap-1.5 text-xs sm:text-sm bg-red-950/40 text-red-500/60 px-3 py-2 rounded-lg border border-red-900/30 cursor-not-allowed opacity-60" title="Fitur reset turnamen dinonaktifkan">
+          <i data-lucide="lock" class="w-4 h-4"></i>
           <span class="hidden sm:inline">Reset Turnamen</span>
         </button>
       </div>
@@ -114,11 +114,11 @@
           <form id="addPlayerForm" onsubmit="handleAddPlayer(event)" class="space-y-4">
             <div>
               <label class="block text-xs font-medium text-slate-400 mb-1">Nama Pemain / Atlet *</label>
-              <input type="text" id="playerNameInput" required placeholder="Contoh: Budi Santoso" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+              <input type="text" id="playerNameInput" disabled required placeholder="Form dikunci" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-500 placeholder-slate-600 cursor-not-allowed opacity-60">
             </div>
             <div>
               <label class="block text-xs font-medium text-slate-400 mb-1">Pilih Grup Klasemen *</label>
-              <select id="playerGroupInput" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+              <select id="playerGroupInput" disabled class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-500 cursor-not-allowed opacity-60">
                 <option value="A">Grup A</option>
                 <option value="B">Grup B</option>
                 <option value="C">Grup C</option>
@@ -126,10 +126,10 @@
             </div>
             <div>
               <label class="block text-xs font-medium text-slate-400 mb-1">Klub / Asal (Opsional)</label>
-              <input type="text" id="playerClubInput" placeholder="Contoh: PTM Perkasa" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+              <input type="text" id="playerClubInput" disabled placeholder="Form dikunci" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-500 placeholder-slate-600 cursor-not-allowed opacity-60">
             </div>
-            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm py-2.5 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/30">
-              <i data-lucide="plus" class="w-4 h-4"></i>
+            <button type="submit" disabled class="w-full bg-slate-800 text-slate-500 font-medium text-sm py-2.5 rounded-xl cursor-not-allowed opacity-60 flex items-center justify-center gap-2 border border-slate-700/50" title="Fitur tambah pemain dinonaktifkan">
+              <i data-lucide="lock" class="w-4 h-4"></i>
               Tambahkan ke Turnamen
             </button>
           </form>
@@ -137,9 +137,9 @@
           <div class="mt-6 pt-4 border-t border-slate-800/80">
             <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
               <span>Generate Otomatis</span>
-              <button onclick="seedDemoPlayers()" class="text-emerald-400 hover:underline font-medium">Isi Sample Data (Grup A, B, C)</button>
+              <button disabled class="text-slate-600 cursor-not-allowed font-medium">Isi Sample Data (Grup A, B, C)</button>
             </div>
-            <p class="text-[11px] text-slate-500">Mengisi 9 pemain sampel secara otomatis terbagi rata ke Grup A, B, dan C.</p>
+            <p class="text-[11px] text-slate-500">Fitur pengisian otomatis telah dikunci.</p>
           </div>
         </div>
 
@@ -201,8 +201,8 @@
         </div>
 
         <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-          <button onclick="generateSchedule()" class="text-xs bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 px-3 py-2 rounded-xl transition flex items-center gap-1.5">
-            <i data-lucide="shuffle" class="w-3.5 h-3.5"></i>
+          <button id="shuffleScheduleBtn" disabled class="text-xs bg-slate-800 text-slate-500 border border-slate-700/50 px-3 py-2 rounded-xl cursor-not-allowed opacity-60 flex items-center gap-1.5" title="Fitur acak jadwal dinonaktifkan">
+            <i data-lucide="lock" class="w-3.5 h-3.5"></i>
             Acak / Reset Jadwal
           </button>
         </div>
